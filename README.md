@@ -77,7 +77,7 @@ then scan-rescan, between-reconstruction, between-seed and model-vs-explainer ta
 `fig_icc_forest.png`, `fig_bland_altman_primary.png`, `fig_dlogit_dlaf.png`, `fig_lesion_ig.png`,
 `fig_lesion_gradcam.png` (2 x 6, the median-sized complete lesion unless `--figure-patient` is given).
 
-## Robustness (review round 1)
+## Robustness analyses
 
 ```bash
 python 06_rider_saliency.py --gradcam-layer3     # adds Grad-CAM at layer3 (8 mm cells) + any new seeds only
@@ -103,16 +103,16 @@ foreach ($a in "noprior64","prior64") {
 Compare the arms (CSVs only):
 `python 12_compare_ablation.py --arms ..\results\ablation\analysis_prior64 ..\results\ablation\analysis_noprior64 --names prior no-prior --out ..\results\ablation`
 
-## Journal run plan (CMC extended version; results go to D:\paper8\results\journal, ISBI results stay untouched)
+## Full run plan (10 training runs per architecture; results go to D:\paper8\results\journal)
 
-The ISBI numbers come from `results\runs` (seeds 0-4) and `results\saliency`; nothing below writes there.
+The first five ResNet runs (seeds 0-4) come from `results\runs` and `results\saliency`; nothing below writes there.
 Rough disk need: about 3 MB per stored IG map, i.e. ~30 GB per architecture for 10 runs x 3 IG baselines x 353 cells
 (check free space on D: first; `--no-save-maps` keeps only the measurands but then 14/15 and the map analyses
 cannot run).
 
 ```powershell
 $J = "D:\paper8\results\journal"
-# 1. ResNet: reuse seeds 0-4, train seeds 5-9 (same split, same settings as the ISBI runs)
+# 1. ResNet: reuse seeds 0-4, train seeds 5-9 (same split, same settings as seeds 0-4)
 foreach ($s in 0,1,2,3,4) { New-Item -ItemType Directory -Force "$J\runs_resnet\seed$s" | Out-Null; Copy-Item D:\paper8\results\runs\seed$s\* "$J\runs_resnet\seed$s\" }
 foreach ($s in 5,6,7,8,9) { python 05_train.py --patches D:\paper8\results\lidc_patches_v2 --out $J\runs_resnet --seed $s }
 # 2. DenseNet: seeds 0-9 at 128 mm with the centre prior
@@ -140,26 +140,27 @@ python 13_ablation_ci.py --a $J\saliency_resnet\measurands.csv --b $J\saliency_d
 Copy back to the Mac (small files only): everything under `$J\analysis_*` and `$J\compare_arch`, plus
 `$J\runs_*\seed*\summary.json` and `$J\saliency_*\measurands.csv`. No maps, patches or checkpoints are needed.
 
-## Review round 2 (CMC pre-submission review)
+## Sensitivity analyses: centring, resolution and neutral deletion
 
-`powershell -ExecutionPolicy Bypass -File run_review2.ps1` (about 9 h): lesion-centring sensitivity (06
+About 9 h on the server: lesion-centring sensitivity (06
 `--centre-jitter-mm 5/10`, 18 `centring`), layer3 Grad-CAM and resolution-matched comparison (18 `resolution`), and
 deletion with a neutral patch-mean replacement, voxel- and cube-level (14 `--fill mean --unit voxel|cube`).
 
-## Review round 3
+## Additional analyses
 
 - `python 19_size_and_mass.py` (local, CSVs only): LAF vs lesion size, size-adjusted ICC, correct vs missed decisions,
   positive/negative attribution mass -> `results/journal/analysis_*/size_mass/`.
-- `powershell -ExecutionPolicy Bypass -File run_review3.ps1` (server, ~8 h): 20 (variance-ratio CIs, run offsets,
+- Server run, ~8 h: 20 (variance-ratio CIs, run offsets,
   1000 refits), 21 (core/rim, shell, negative LAF, ROI radius), 14 deletion controls (`--random matched`,
   `--within lesion`, `--mode insertion`), 09 lesion figures (median and poorest-agreement lesion).
 
-## Journal figures and validation
+## Figures and validation
 
-- `python 16_journal_figures.py` -> `paper_cmc/figs/fig_faithfulness.png` (deletion curves, cascading randomisation).
+- `python 16_journal_figures.py` -> `fig_faithfulness.png` (deletion curves, cascading randomisation).
 - `python 08_paper_figures.py --analysis ..\results\journal\analysis_resnet` -> 10-run variance-sources figure.
-- `python 17_validate_cmc.py` recomputes the numbers in `paper_cmc/main.tex` from `results/journal` and
-  `results/ablation` and writes `paper_cmc/validation_sheet.md`; every row must be MATCH.
+- `python 17_validate_cmc.py` recomputes the numbers in the manuscript source from `results/journal` and
+  `results/ablation` (manuscript folder set with the `PAPER_DIR` environment variable) and writes
+  `validation_sheet.md` there; every row must be MATCH.
 
 ## Validation sheet
 

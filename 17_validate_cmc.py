@@ -407,7 +407,7 @@ def main():
     v2 = (cmp_.loc["IG VC SD x run", "no-prior"] / cmp_.loc["IG VC SD x scan", "no-prior"]) ** 2
     check("Ablation", "64 mm variance ratios", "variance ratios about ", f"{f(v1,1)} and {f(v2,1)}), against", "ablation_comparison.csv")
 
-    # ---- review round 2: centring, resolution, neutral deletion (run_review2.ps1) ------------------
+    # ---- review round 2: centring, resolution, neutral deletion ------------------
     cen = pd.read_csv(J / "analysis_resnet" / "sensitivity" / "centring_summary.csv")
     ci_ = cen[cen.explainer == "ig"].set_index("jitter_mm").sort_index()
     cg = cen[cen.explainer == "gradcam"].set_index("jitter_mm").sort_index()
