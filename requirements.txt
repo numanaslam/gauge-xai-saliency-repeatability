@@ -1,0 +1,8 @@
+pydicom>=2.4
+numpy
+pandas
+matplotlib
+scipy
+statsmodels
+idc-index
+torch  # RTX 5070: install the CUDA 12.8+ build (see README)
